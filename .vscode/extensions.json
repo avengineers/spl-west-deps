@@ -1,0 +1,10 @@
+{
+  "recommendations": [
+    "charliermarsh.ruff",
+    "ms-python.python",
+    "ms-python.vscode-pylance",
+    "mystExecutableBookProject.myst-highlight",
+    "chrisjsewell.myst-tml-syntax",
+    "chrisjsewell.myst-lsp"
+  ]
+}
