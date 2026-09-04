@@ -1,6 +1,6 @@
 [project]
 name = "spl-west-deps"
-version = "0.0.0"
+version = "0.1.0"
 description = "An spl-core build extension that installs the west dependencies of a variant"
 readme = "README.md"
 license = "MIT"
