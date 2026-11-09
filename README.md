@@ -75,6 +75,33 @@ build/modules/brightness-controller/generated-code-v0.1.0/
 build/modules/brightness-controller/generated-code-v0.5.0/
 ```
 
+## Workspace directory
+
+The workspace directory is where west installs the dependencies. By default it
+is `build/modules` below the project root. A relative path is resolved against
+the project root. An absolute path is used as it is.
+
+The first setting found wins:
+
+| Setting | Example |
+| --- | --- |
+| CMake variable `SPL_WEST_DEPS_WORKSPACE_DIR` | `set(SPL_WEST_DEPS_WORKSPACE_DIR modules)` before the `include()`, or `-DSPL_WEST_DEPS_WORKSPACE_DIR=D:/west` |
+| Environment variable `SPL_WEST_DEPS_WORKSPACE_DIR` | Set by the CI job |
+| Default | `build/modules` |
+
+To set it per variant, put the `set()` into `variants/<VARIANT>/config.cmake`,
+as long as the project includes that file before this extension.
+
+The command line option behind it is `spl_west_deps generate --workspace-dir <dir>`.
+
+When the directory changes, the next CMake configuration installs the
+dependencies into the new directory. The old directory is left as it is.
+
+A west workspace points to one manifest at a time. Each run points it to its own
+merged manifest just before it updates. So several configurations can share one
+workspace one after the other, but not at the same time: one of them could then
+update with the manifest of the other.
+
 ## How it works
 
 Unlike the other spl-core extensions, `index.cmake` does **not**

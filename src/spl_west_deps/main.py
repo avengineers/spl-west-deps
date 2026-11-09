@@ -4,9 +4,11 @@ from pathlib import Path
 import typer
 from py_app_dev.core.logging import logger
 
-from spl_west_deps.west_installer import install_dependencies
+from spl_west_deps.west_installer import DEFAULT_WORKSPACE_DIR, install_dependencies
 
 package_name = "spl_west_deps"
+#: Environment variable that sets the workspace directory when ``--workspace-dir`` is not given.
+WORKSPACE_DIR_ENV_VAR = "SPL_WEST_DEPS_WORKSPACE_DIR"
 
 app = typer.Typer(name=package_name, help="An spl-core extension to install the west dependencies of a variant", add_completion=False)
 
@@ -26,11 +28,17 @@ def generate(
     project_root_dir: Path = typer.Option(..., "--project-root-dir", help="The project root directory."),  # noqa: B008
     variant: str = typer.Option(..., "--variant", help="The variant of the project."),
     output_file: Path = typer.Option(..., "--output-file", help="The CMake file to generate."),  # noqa: B008
+    workspace_dir: str = typer.Option(
+        DEFAULT_WORKSPACE_DIR,
+        "--workspace-dir",
+        envvar=WORKSPACE_DIR_ENV_VAR,
+        help="Where west installs the dependencies. Relative to the project root, or absolute.",
+    ),
 ) -> None:
     """Install the west dependencies of this variant and generate the CMake file."""
     logger.info("[CLI] generate command invoked")
     try:
-        install_dependencies(project_root_dir, variant, output_file)
+        install_dependencies(project_root_dir, variant, output_file, workspace_dir=workspace_dir)
         logger.info("[CLI] generate command completed successfully")
     except Exception as e:
         logger.error(f"[CLI] generate command failed: {e}")
