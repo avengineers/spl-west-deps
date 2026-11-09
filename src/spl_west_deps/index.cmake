@@ -6,8 +6,22 @@
 set(WEST_DEPS_RUNNER spl_west_deps)
 set(WEST_DEPS_CMAKE_FILE ${CMAKE_BINARY_DIR}/spl_west_deps.cmake)
 
+# Workspace for west install.
+# Project-relative or absolute; set via -D or set() before inclusion.
+# Empty: use environment variable SPL_WEST_DEPS_WORKSPACE_DIR, then build/modules.
+# Cache only if undefined to preserve normal variables regardless of CMP0126.
+if(NOT DEFINED SPL_WEST_DEPS_WORKSPACE_DIR)
+    set(SPL_WEST_DEPS_WORKSPACE_DIR "" CACHE STRING
+        "Where west installs the dependencies (relative to the project root, or absolute). Empty: environment variable SPL_WEST_DEPS_WORKSPACE_DIR, else build/modules.")
+endif()
+
+set(WEST_DEPS_ARGS generate --project-root-dir ${CMAKE_SOURCE_DIR} --variant ${VARIANT} --output-file ${WEST_DEPS_CMAKE_FILE})
+if(NOT SPL_WEST_DEPS_WORKSPACE_DIR STREQUAL "")
+    list(APPEND WEST_DEPS_ARGS --workspace-dir "${SPL_WEST_DEPS_WORKSPACE_DIR}")
+endif()
+
 execute_process(
-    COMMAND ${WEST_DEPS_RUNNER} generate --project-root-dir ${CMAKE_SOURCE_DIR} --variant ${VARIANT} --output-file ${WEST_DEPS_CMAKE_FILE}
+    COMMAND ${WEST_DEPS_RUNNER} ${WEST_DEPS_ARGS}
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     OUTPUT_VARIABLE output
     ERROR_VARIABLE error

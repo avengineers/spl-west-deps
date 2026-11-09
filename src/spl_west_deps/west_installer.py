@@ -20,26 +20,27 @@ from pypeline.steps.west_install import WestInstall, WestManifestFile
 MANIFEST_FILE_NAME = "west.yaml"
 #: Directory holding the variant directories, relative to the project root.
 VARIANTS_DIR_NAME = "variants"
-#: Workspace the dependencies are installed into, relative to the project root.
-#: Every variant shares it. Two variants pinning one dependency at two revisions
-#: do not collide, because the revision is part of each install path.
-WORKSPACE_DIR = "build/modules"
+#: Workspace the dependencies are installed into when no other one is given,
+#: relative to the project root. Every variant shares it. Two variants pinning one
+#: dependency at two revisions do not collide, because the revision is part of
+#: each install path.
+DEFAULT_WORKSPACE_DIR = "build/modules"
 #: Name this package registers its data under, shown as the provider in the registry.
 PROVIDER_NAME = "spl_west_deps"
 
 
-def install_dependencies(project_root_dir: Path, variant: str, output_file: Path) -> None:
-    """Install the west dependencies of the variant and write the CMake file."""
-    logger.info(f"Installing the west dependencies of variant {variant}")
+def install_dependencies(project_root_dir: Path, variant: str, output_file: Path, workspace_dir: str = DEFAULT_WORKSPACE_DIR) -> None:
+    """Install the west dependencies of the variant and write the CMake file.
+
+    ``workspace_dir`` is where west installs the dependencies: relative to the
+    project root, or absolute.
+    """
+    logger.info(f"Installing the west dependencies of variant {variant} into {workspace_dir}")
     execution_context = create_execution_context(project_root_dir, variant)
 
     # The step collects its manifests in __init__, so the variant manifest must
     # already be in the data registry by now.
-    step = WestInstall(
-        execution_context,
-        group_name=variant,
-        config={"workspace_dir": WORKSPACE_DIR, "revision_scoped_paths": True},
-    )
+    step = create_west_install_step(execution_context, variant, workspace_dir)
 
     # The Executor skips the west calls while the manifests and the installed
     # directories are unchanged. Without it every CMake configuration would
@@ -53,6 +54,20 @@ def install_dependencies(project_root_dir: Path, variant: str, output_file: Path
     step.update_execution_context()
 
     write_cmake_file(output_file, execution_context.data_registry.find_data(ExternalProject))
+
+
+def create_west_install_step(execution_context: ExecutionContext, variant: str, workspace_dir: str) -> WestInstall[ExecutionContext]:
+    """Create the WestInstall step that installs the dependencies into ``workspace_dir``.
+
+    The step resolves a relative ``workspace_dir`` against the project root. The
+    directory is part of the step config, so the Executor runs the step again
+    when it changes, instead of skipping it.
+    """
+    return WestInstall(
+        execution_context,
+        group_name=variant,
+        config={"workspace_dir": workspace_dir, "revision_scoped_paths": True},
+    )
 
 
 def create_execution_context(project_root_dir: Path, variant: str) -> ExecutionContext:
